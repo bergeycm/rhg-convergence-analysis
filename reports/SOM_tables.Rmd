@@ -1,0 +1,671 @@
+# Supplementary tables, text, and figures
+
+```{r echo=FALSE}
+options(stringsAsFactors=FALSE)
+library(xtable)
+library(ggplot2)
+
+pops = c("Batwa.GBR", "Anda.LWK", "Bakiga.GBR", "BR1.LWK")
+
+pop.names = list()
+pop.names[["Batwa.GBR"]]  = "Batwa Hunter-Gatherers"
+pop.names[["Anda.LWK"]]   = "Andamanese Hunter-Gatherers"
+pop.names[["Bakiga.GBR"]] = "Bakiga Agriculturalists"
+pop.names[["BR1.LWK"]]    = "Brahmin Agriculturalists"
+
+onts = c("BP", "MF", "CC")
+
+ont.names = list()
+ont.names[["BP"]]  = "Biological Process (BP)"
+ont.names[["MF"]]  = "Molecular Function (MF)"
+ont.names[["CC"]]  = "Cellular Component (CC)"
+```
+
+### Contents
+
+1. [Growth-associated gene list results](#apriori)
+    1. [Overrepresentation results](#apriori-overrep)
+    2. [Enrichment results](#apriori-enrich)
+2. [GO overrep results](#overrep)
+    1. [Population-specific over-represented GO term results](#overrep-popspecific)
+    2. [Convergently (Batwa and Andamanese) over-represented GO term results](#overrep-convergent)
+    3. [Subsistence strategy covariation (BayEnv) over-represented GO term results](#overrep-bayenv)
+3. [Proportion of high PBS nonsynonymous sites results](#NS-test)
+4. [Candidate genes from PBS overrepresentation analyses](#candidate-genes-pbs)
+5. [Candidate genes from Subsistence strategy covariation (BayEnv) overrepresentation analyses](#candidate-genes-bayenv)
+6. [Candidate SNPs from PBS overrep analyses](#candidate-snps-pbs)
+7. [Candidate SNPs from Subsistence strategy covariation (BayEnv) overrepresentation analyses](#candidate-snps-bayenv)
+8. [All GO enrichment results](#enrich)
+    1. [Population-specific enrichment GO term results](#enrich-popspecific)
+    2. [Convergent (Batwa and Andamanese) enrichment GO term results](#enrich-convergent)
+    3. [Subsistence strategy covariation (BayEnv) enrichment GO term results](#enrich-bayenv)
+
+------------------------------------------------------------------------------------------
+
+## Growth-associated gene list results <a name="apriori"></a>
+
+### Overrepresentation results <a name="apriori-overrep"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S1*: Results of tests for over-representation of outlier PBS indices using",
+    "_a priori_ lists of genes related to growth.\n")
+
+for (pop in pops) {
+
+    cat("  \n####",  pop.names[[pop]], "\n")
+
+    chisq.df = read.table(paste0("pbs.", pop, ".pvals.chisq.overrep.txt"),
+        sep="\t", header=TRUE)
+
+    chisq.df = chisq.df[,-c(7,8,10)]
+
+    names(chisq.df) = c("Gene List", "p-value cutoff", "GO Sig.", "GO Total",
+        "Other Sig.", "Other Total", "p")
+
+    xt.chisq = xtable(chisq.df, digits=c(0,0,3,0,0,0,0,3))
+
+    print(xt.chisq, type="html",
+        include.rownames=FALSE,
+        floating=FALSE)
+}
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+cat("  \n#### Subsistence strategy covariation (BayEnv)\n")
+
+cat("  \n*Table S2*: Results of tests for over-representation of outlier Bayenv indices using",
+    "_a priori_ lists of genes related to growth.\n")
+
+chisq.df = read.table("bayenv_BF_pass.pvals.chisq.overrep.txt",
+    sep="\t", header=TRUE)
+
+chisq.df = chisq.df[,-c(7,8,10)]
+
+names(chisq.df) = c("Gene List", "p-value cutoff", "GO Sig.", "GO Total",
+        "Other Sig.", "Other Total", "p")
+
+xt.chisq = xtable(chisq.df, digits=c(0,0,3,0,0,0,0,3))
+print(xt.chisq, type="html",
+    include.rownames=FALSE,
+    floating=FALSE)
+```
+
+### Enrichment results <a name="apriori-enrich"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S3*: Results of enrichment tests for PBS indices using",
+    "_a priori_ lists of genes related to growth.\n")
+
+for (pop in pops) {
+
+    cat("  \n####",  pop.names[[pop]], "\n")
+
+    all.wilcox = read.table(paste0("pbs.", pop, ".pvals.wilcoxshift.txt"),
+        sep="\t", header=FALSE)
+
+    names(all.wilcox) = c("Gene list", "Wilcox p-value")
+
+    xt.wilcox = xtable(all.wilcox, digits=c(0,0,3))
+
+    print(xt.wilcox, type="html",
+        include.rownames=FALSE,
+        floating=FALSE)
+}
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+cat("  \n#### Subsistence strategy covariation (BayEnv)\n")
+
+cat("  \n*Table S4*: Results of enrichment tests for Bayenv indices using",
+    "_a priori_ lists of genes related to growth.\n")
+
+all.wilcox = read.table("bayenv_BF_pass.pvals.wilcoxshift.txt",
+    sep="\t", header=FALSE)
+
+names(all.wilcox) = c("Gene List", "Wilcox p-value")
+
+xt.wilcox = xtable(all.wilcox, digits=c(0,0,3))
+
+print(xt.wilcox, type="html",
+    include.rownames=FALSE,
+    floating=FALSE)
+
+```
+
+------------------------------------------------------------------------------------------
+
+## GO overrep results <a name="overrep"></a>
+
+### Population-specific over-represented GO term results <a name="overrep-popspecific"></a>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+source("http://bioconductor.org/biocLite.R")
+library("GO.db")
+
+overrep.results = do.call(rbind, lapply(pops, function(pop) {
+    do.call(rbind, lapply(onts, function(ont) {
+        df = read.table(paste0("../results/pbs.", pop, ".pvals.",
+                ont, ".overrep.results.txt"),
+            header=TRUE, sep="\t", quote="~")
+        df$ont = ont
+        df$pop = pop
+        df = df[order(df$classicFisher),]
+        df = df[1:3,]
+        df
+    }))
+}))
+
+# Reduce to just significant
+overrep.results = overrep.results[overrep.results$classicFisher < 0.05,]
+
+# Get full GO term description
+overrep.results$desc.full = sapply(overrep.results$GO.ID, function (x) {
+    go.term = GOTERM[[x]]
+    if (is.null(go.term)) {
+        return(NA)
+    } else {
+        return(paste0(Term(go.term), " (", x, ")"))
+    }
+ })
+
+cleaned = overrep.results[,c(12,11,13,3:6)]
+
+cleaned$pop = gsub("\\..*", "", cleaned$pop)
+cleaned$pop = gsub("Anda", "Andamanese", cleaned$pop)
+cleaned$pop = gsub("BR1",  "Brahmin",    cleaned$pop)
+
+names(cleaned) = c("Population", "", "GO", "Annotated", "Obs.", "Exp.", "p")
+
+xt = xtable(cleaned, digits=c(0,0,0,0,0,0,2,-3), align='llll|rrrr')
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+cat("  \n*Table S5*: Gene Ontology (GO) terms showing over-representation of outlier PBS",
+    "indices.\n")
+
+print.xtable(xt,
+    type="html",
+    include.rownames = FALSE,
+    caption.placement = "top")
+```
+
+### Convergently (Batwa and Andamanese) over-represented GO term results <a name="overrep-convergent"></a>
+
+```{r echo=FALSE}
+
+conv = read.table(file="../results/joint_GO_pvalues.overrep.txt")
+
+# Just Batwa and Anda
+conv = conv[grepl("batwa", conv$stat1) & grepl("anda", conv$stat2),]
+
+# Get full GO term description
+conv$Term.x = sapply(conv$GO.ID, function (x) {
+    go.term = GOTERM[[x]]
+    if (is.null(go.term)) {
+        return(NA)
+    } else {
+        return(paste0(Term(go.term), " (", x, ")"))
+    }
+ })
+
+conv$ont = gsub("go\\.([^\\.]+)\\..*", "\\1", conv$stat1)
+
+conv = conv[,c(13,2:12)]
+
+# Remove CC
+conv = conv[conv$ont != "CC",]
+
+conv$stat1 = gsub("go\\.([^\\.]+)\\.", "", conv$stat1)
+conv$stat2 = gsub("go\\.([^\\.]+)\\.", "", conv$stat2)
+
+conv$stat1 = gsub("pbs.", "PBS ", conv$stat1)
+conv$stat2 = gsub("pbs.", "PBS ", conv$stat2)
+
+conv$stat1 = gsub("NvsS.", "N vs. S ", conv$stat1)
+conv$stat2 = gsub("NvsS.", "N vs. S ", conv$stat2)
+
+conv$stat1 = gsub("batwa", "Batwa", conv$stat1)
+conv$stat2 = gsub("batwa", "Batwa", conv$stat2)
+
+conv$stat1 = gsub("bakiga", "Bakiga", conv$stat1)
+conv$stat2 = gsub("bakiga", "Bakiga", conv$stat2)
+
+conv$stat1 = gsub("anda", "Andamanese", conv$stat1)
+conv$stat2 = gsub("anda", "Andamanese", conv$stat2)
+
+conv$stat1 = gsub("bir", "Birhor", conv$stat1)
+conv$stat2 = gsub("bir", "Birhor", conv$stat2)
+
+conv$stat1 = gsub("br1", "Brahmin", conv$stat1)
+conv$stat2 = gsub("br1", "Brahmin", conv$stat2)
+
+conv$stat1 = gsub("go.bp.", "GO ", conv$stat1)
+conv$stat2 = gsub("go.bp.", "GO ", conv$stat2)
+
+names(conv) = c("", "GO",
+    "Stat 1", "Sig.", "Exp.", "p",
+    "Stat 2", "Sig.", "Exp.", "p",
+    "Joint p Edington", "Joint p Fisher")
+
+# Reorder to PBS and then N vs. S
+conv = rbind(conv[grep("PBS", conv[["Stat 1"]]),],
+             conv[grep("PBS", conv[["Stat 1"]], invert=TRUE),])
+
+horiz.lines = unique(c(
+    which(c(conv[["Stat 1"]], NA) != c(NA, conv[["Stat 1"]])),
+    which(c(conv[["Stat 2"]], NA) != c(NA, conv[["Stat 2"]]))
+)) - 1
+
+# Remove stats
+conv = conv[,-c(3,7)]
+
+# Remove all numbers but p-value
+conv = conv[,-c(3,4,6,7)]
+names(conv)[3:4] = c("p Batwa", "p Andamanese")
+
+xt = xtable(conv, digits=c(0,0,0,-3,-3,-3,-3), align='lll|ll|rr')
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+cat("  \n*Table S6*: Gene Ontology (GO) terms showing convergent over-representation of outlier PBS",
+    "indices, as measured by the Fisher or Edgington methods for combining p-values.\n")
+
+print(xt, type="html",
+    include.rownames=FALSE,
+    sanitize.colnames.function = identity,
+    sanitize.text.function = identity,
+    hline.after = horiz.lines)
+```
+
+------------------------------------------------------------------------------------------
+
+```{r echo=FALSE}
+
+### Subsistence strategy covariation (BayEnv) over-represented GO term results <a name="overrep-bayenv"></a>
+
+overrep.results = do.call(rbind, lapply(onts, function(ont) {
+    df = read.table(paste0("../results/bayenv_BF_pass.pvals.",
+            ont, ".overrep.results.txt"),
+        header=TRUE, sep="\t", quote="~")
+    df$ont = ont
+    df$pop = pop
+    df = df[order(df$classicFisher),]
+    df = df[1:3,]
+    df
+}))
+
+# Reduce to just significant
+overrep.results = overrep.results[overrep.results$classicFisher < 0.05,]
+
+# Get full GO term description
+overrep.results$desc.full = sapply(overrep.results$GO.ID, function (x) {
+    go.term = GOTERM[[x]]
+    if (is.null(go.term)) {
+        return(NA)
+    } else {
+        return(paste0(Term(go.term), " (", x, ")"))
+    }
+ })
+
+cleaned = overrep.results[,c(12,11,13,3:6)]
+
+cleaned$pop = gsub("\\..*", "", cleaned$pop)
+cleaned$pop = gsub("Anda", "Andamanese", cleaned$pop)
+cleaned$pop = gsub("BR1",  "Brahmin",    cleaned$pop)
+
+names(cleaned) = c("Population", "", "GO", "Annotated", "Obs.", "Exp.", "p")
+
+xt = xtable(cleaned, digits=c(0,0,0,0,0,0,2,-3), align='llll|rrrr')
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+cat("  \n*Table S7*: Gene Ontology (GO) terms showing over-representation of outlier Bayenv",
+    "indices, indicating association with subsistence strategy.\n")
+
+print.xtable(xt,
+    type="html",
+    include.rownames = FALSE,
+    caption.placement = "top")
+```
+
+------------------------------------------------------------------------------------------
+
+## Proportion of high PBS nonsynonymous sites results <a name="NS-test"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+cat("  \n*Table S8*: Top Gene Ontology (GO) terms for greatest proportion of nonsynonymous SNP PBS indices",
+    "less than the 5th percentile of the synonymous site distribution.\n")
+
+for (pop in pops) {
+
+    cat("  \n###",  pop.names[[pop]], "\n")
+
+    for (ont in onts) {
+
+        cat("  \n####",  ont.names[[ont]], "\n")
+
+        in.NvsS.file = paste0("../results/N_vs_S_by_GO/N_vs_S_by_GO_pbs.",
+            pop, "_", ont, ".bySNP.txt")
+        rows.to.show = 5
+
+        in.NvsS = read.table(in.NvsS.file, header=TRUE)
+
+        # Sort by p-value
+        in.NvsS = in.NvsS[order(in.NvsS$fisher_p, decreasing=FALSE),]
+
+        # Get GO term description
+        in.NvsS$desc = sapply(in.NvsS$GO_term, function (x) {
+            go.term = GOTERM[[x]]
+            if (is.null(go.term)) {
+                return(NA)
+            } else {
+                return(Term(go.term))
+            }
+        } )
+
+        # Show only N rows and reduce columns:
+        cols.to.keep = c("GO_term", "desc", "num_genes", "n_length", "s_length",
+                         "prop_high_n_genome_cutoff", "obs_high_n", "exp_high_n",
+                         "fisher_OR", "fisher_p")
+        in.NvsS.top = head(in.NvsS[in.NvsS$n_length > 50,], n=rows.to.show)
+        in.NvsS.top = in.NvsS.top[,cols.to.keep]
+
+        names(in.NvsS.top) = c(
+            "GO", "", "Num. Genes",
+            "Nonsyn. SNP count", "Syn. SNP count",
+            "Prop. High Nonsyn.", "Obs. High Nonsyn.", "Exp. High Nonsyn.",
+            "OR", "Fisher p"
+        )
+
+        xt = xtable(in.NvsS.top)
+
+        print(xt, type="html", include.rownames=FALSE, html.table.attributes='border="1"')
+
+        # Also plot p-values by proportion while we're here
+        p = ggplot(in.NvsS, aes(fisher_p, prop_high_n_genome_cutoff, col=log(num_genes))) +
+            geom_point() +
+            xlab("Fisher p") + ylab("Proportion of N SNPs > 95th percentile of S SNPs") +
+            geom_text(data=subset(in.NvsS, in.NvsS$fisher_p < 0.001), aes(label=GO_term),
+                check_overlap=TRUE, hjust = 0, nudge_x = -0.2, size=3)
+        print(p)
+    }
+}
+```
+
+------------------------------------------------------------------------------------------
+
+## Candidate genes from PBS overrepresentation analyses <a name="candidate-genes-pbs"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S9*: Candidate genes showing outlier patterns for PBS index.\n")
+
+for (pop in pops){
+
+    cat("  \n###",  pop.names[[pop]], "\n")
+
+    outlier.genes = read.table(paste0("pbs.", pop, ".pvals.extreme.vals.txt"),
+        sep="\t", header=TRUE)
+
+    outlier.genes = outlier.genes[!is.na(outlier.genes$gene),]
+
+    names(outlier.genes) = c("Gene", "p", "Adj. p", "Growth annotations")
+
+    xt.outlier.genes = xtable(outlier.genes, digits=c(0,0,-3,-3,0))
+
+    print(xt.outlier.genes, type="html",
+        include.rownames=FALSE,
+        floating=FALSE)
+}
+```
+
+## Candidate genes from Subsistence strategy covariation (BayEnv) overrepresentation analyses <a name="candidate-genes-bayenv"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S10*: Candidate genes showing outlier patterns for Bayenv index.\n")
+
+for (pop in pops) {
+    outlier.genes = read.table("bayenv_BF_pass.pvals.extreme.vals.txt",
+        sep="\t", header=TRUE)
+
+    outlier.genes = outlier.genes[!is.na(outlier.genes$gene),]
+
+    names(outlier.genes) = c("Gene", "p", "Adj. p", "Growth annotations")
+
+    xt.outlier.genes = xtable(outlier.genes, digits=c(0,0,-3,-3,0))
+
+    print(xt.outlier.genes, type="html",
+        include.rownames=FALSE,
+        floating=FALSE)
+}
+```
+
+------------------------------------------------------------------------------------------
+
+## Candidate SNPs from PBS overrep analyses <a name="candidate-snps-pbs"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S11*: Candidate SNPs showing outlier patterns for PBS index.\n")
+
+for (pop in pops) {
+
+    cat("  \n###",  pop.names[[pop]], "\n")
+
+    outlier.snps = read.table(paste0("pbs.", pop, ".anno.extreme.vals.txt"),
+        sep="\t", header=TRUE)
+
+    outlier.snps$chr = paste0(outlier.snps$chr, ":", outlier.snps$start)
+    outlier.snps = outlier.snps[,-c(2:3)]
+
+    names(outlier.snps) = c("SNP", "PBS", "Genes",
+        "p", "Adj. p", "Growth annotations")
+
+    xt.outlier.snps = xtable(outlier.snps, digits=c(0,0,3,0,-3,-3,0))
+
+    print(xt.outlier.snps, type="html",
+        include.rownames=FALSE,
+        floating=FALSE)
+}
+```
+
+## Candidate SNPs from Subsistence strategy covariation (BayEnv) overrepresentation analyses <a name="candidate-snps-bayenv"></a>
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S12*: Candidate SNPs showing outlier patterns for Bayenv index.\n")
+
+outlier.snps = read.table("bayenv_BF_pass.anno.extreme.vals.txt",
+    sep="\t", header=TRUE)
+
+outlier.snps$chr = paste0(outlier.snps$chr, ":", outlier.snps$start)
+names(outlier.snps) = c("SNP", "Bayenv BF", "Genes",
+    "p", "Adj. p", "Growth annotations")
+
+xt.outlier.snps = xtable(outlier.snps, digits=c(0,0,0,0,3,0,-3,-3,0))
+
+print(xt.outlier.snps, type="html",
+    include.rownames=FALSE,
+    floating=FALSE)
+```
+
+------------------------------------------------------------------------------------------
+
+## All GO enrichment results <a name="enrich"></a>
+
+### Population-specific enrichment GO term results <a name="enrich-popspecific"></a>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cat("  \n*Table S13*: Gene Ontology (GO) terms showing significant enrichment in",
+    "distribution of PBS indices.\n")
+
+enrich.results = do.call(rbind, lapply(pops, function(pop) {
+    do.call(rbind, lapply(onts, function(ont) {
+        df = read.table(paste0("../results/pbs.", pop, ".pvals.",
+                ont, ".enrich.results.txt"),
+            header=TRUE, sep="\t", quote="~")
+        df$ont = ont
+        df$pop = pop
+        df = df[order(df$classicKS),]
+        df = df[1:5,]
+        df
+    }))
+}))
+
+# Reduce to just significant
+enrich.results = enrich.results[enrich.results$classicKS < 0.05,]
+
+# Get full GO term description
+enrich.results$desc.full = sapply(enrich.results$GO.ID, function (x) {
+    go.term = GOTERM[[x]]
+    if (is.null(go.term)) {
+        return(NA)
+    } else {
+        return(paste0(Term(go.term), " (", x, ")"))
+    }
+ })
+
+cleaned = enrich.results[,c(12,11,13,3:5,7)]
+
+cleaned$pop = gsub("\\..*", "", cleaned$pop)
+cleaned$pop = gsub("Anda", "Andamanese", cleaned$pop)
+cleaned$pop = gsub("BR1",  "Brahmin",    cleaned$pop)
+
+names(cleaned) = c("Population", "", "GO", "Annotated", "Obs.", "Exp.", "p")
+
+xt = xtable(cleaned, digits=c(0,0,0,0,0,0,2,-3), align='llll|rrrr')
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+
+print.xtable(xt,
+    type="html",
+    include.rownames = FALSE,
+    caption.placement = "top")
+```
+
+### Convergent (Batwa and Andamanese) enrichment GO term results <a name="enrich-convergent"></a>
+
+```{r echo=FALSE}
+
+conv = read.table(file="../results/joint_GO_pvalues.enrich.txt")
+
+# Just Batwa and Anda
+conv = conv[grepl("batwa", conv$stat1) & grepl("anda", conv$stat2),]
+
+# Get full GO term description
+conv$Term.x = sapply(conv$GO.ID, function (x) {
+    go.term = GOTERM[[x]]
+    if (is.null(go.term)) {
+        return(NA)
+    } else {
+        return(Term(go.term))
+    }
+ })
+
+conv$ont = gsub("go\\.([^\\.]+)\\..*", "\\1", conv$stat1)
+
+conv = conv[,c(9,1:8)]
+
+# Remove CC
+conv = conv[conv$ont != "CC",]
+
+conv$stat1 = gsub("go\\.([^\\.]+)\\.", "", conv$stat1)
+conv$stat2 = gsub("go\\.([^\\.]+)\\.", "", conv$stat2)
+
+conv$stat1 = gsub("pbs.", "PBS ", conv$stat1)
+conv$stat2 = gsub("pbs.", "PBS ", conv$stat2)
+
+conv$stat1 = gsub("NvsS.", "N vs. S ", conv$stat1)
+conv$stat2 = gsub("NvsS.", "N vs. S ", conv$stat2)
+
+conv$stat1 = gsub("batwa", "Batwa", conv$stat1)
+conv$stat2 = gsub("batwa", "Batwa", conv$stat2)
+
+conv$stat1 = gsub("bakiga", "Bakiga", conv$stat1)
+conv$stat2 = gsub("bakiga", "Bakiga", conv$stat2)
+
+conv$stat1 = gsub("anda", "Andamanese", conv$stat1)
+conv$stat2 = gsub("anda", "Andamanese", conv$stat2)
+
+conv$stat1 = gsub("bir", "Birhor", conv$stat1)
+conv$stat2 = gsub("bir", "Birhor", conv$stat2)
+
+conv$stat1 = gsub("br1", "Brahmin", conv$stat1)
+conv$stat2 = gsub("br1", "Brahmin", conv$stat2)
+
+conv$stat1 = gsub("go.bp.", "GO ", conv$stat1)
+conv$stat2 = gsub("go.bp.", "GO ", conv$stat2)
+
+names(conv) = c("", "GO", "",
+    "Stat 1", "p",
+    "Stat 2", "p",
+    "Joint p Edington", "Joint p Fisher")
+
+xt = xtable(conv, digits=c(0,0,0,0,0,-3,0,-3,-3,-3), align='llll|lr|lr|rr')
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S14*: Gene Ontology (GO) terms showing convergent enrichment in PBS",
+    "indices, as measured by the Fisher or Edgington methods for combining p-values.\n")
+
+print(xt, type="html",
+    include.rownames=FALSE,
+    sanitize.colnames.function = identity,
+    sanitize.text.function = identity,
+    hline.after = horiz.lines)
+```
+
+------------------------------------------------------------------------------------------
+
+### Subsistence strategy covariation (BayEnv) enrichment GO term results <a name="enrich-bayenv"></a>
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+enrich.results = do.call(rbind, lapply(onts, function(ont) {
+    df = read.table(paste0("../results/bayenv_BF_pass.pvals.",
+            ont, ".enrich.results.txt"),
+        header=TRUE, sep="\t", quote="~")
+    df$ont = ont
+    df$pop = pop
+    df = df[order(df$classicKS),]
+    df = df[1:5,]
+    df
+}))
+
+# Reduce to just significant
+enrich.results = enrich.results[enrich.results$classicKS < 0.05,]
+
+# Get full GO term description
+enrich.results$desc.full = sapply(enrich.results$GO.ID, function (x) {
+    go.term = GOTERM[[x]]
+    if (is.null(go.term)) {
+        return(NA)
+    } else {
+        return(paste0(Term(go.term), " (", x, ")"))
+    }
+ })
+
+cleaned = enrich.results[,c(12,11,13,3:5,7)]
+
+cleaned$pop = gsub("\\..*", "", cleaned$pop)
+cleaned$pop = gsub("Anda", "Andamanese", cleaned$pop)
+cleaned$pop = gsub("BR1",  "Brahmin",    cleaned$pop)
+
+names(cleaned) = c("Population", "", "GO", "Annotated", "Obs.", "Exp.", "p")
+
+xt = xtable(cleaned, digits=c(0,0,0,0,0,0,2,-3), align='llll|rrrr')
+```
+
+```{r echo=FALSE, comment=NA, results="asis"}
+cat("  \n*Table S15*: Gene Ontology (GO) terms showing significant enrichment in",
+    "distribution of Bayenv indices.\n")
+
+print.xtable(xt,
+    type="html",
+    include.rownames = FALSE,
+    caption.placement = "top")
+```

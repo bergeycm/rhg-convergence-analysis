@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1,walltime=20:00:00,mem=5gb
+#PBS -N iHS
+#PBS -m abe
+#PBS -M cxb585@psu.edu
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# Call with qsub -t 1-22 pbs/run_selscan.pbs
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+
+# ----------------------------------------------------------------------------------------
+# --- Compute iHS with selScan
+# ----------------------------------------------------------------------------------------
+
+cd $working_dir
+
+echo "Running selScan to compute iHS for chr$PBS_ARRAYID..."
+
+sh scripts/run_selscan.sh $PBS_ARRAYID
+
+exit

@@ -1,0 +1,83 @@
+
+\documentclass[12pt,landscape]{article}
+
+% Added for cell shading
+%\usepackage{color, colortbl}
+%\definecolor{ashgrey}{rgb}{0.7, 0.75, 0.71}
+%\newcommand{\cc}{ $^\dag$\cellcolor{ashgrey} }
+
+\usepackage{longtable}
+\usepackage[a4paper,margin=0.5in,landscape]{geometry}
+
+\begin{document}
+
+% --- Fst
+\section{$F_{ST}$}
+\subsection{Batwa vs. Bakiga}
+\input{"eAGR_eRHG_weir_fst_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"eAGR_eRHG_weir_fst_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"eAGR_eRHG_weir_fst_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"eAGR_eRHG_weir_fst_anno_chisq_overrep"}
+
+% --- PBS
+\section{PBS}
+\subsection{Bakiga}
+\input{"pbs_Bakiga_GBR_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"pbs_Bakiga_GBR_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"pbs_Bakiga_GBR_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"pbs_Bakiga_GBR_anno_chisq_overrep"}
+
+\subsection{Batwa}
+\input{"pbs_Batwa_GBR_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"pbs_Batwa_GBR_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"pbs_Batwa_GBR_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"pbs_Batwa_GBR_anno_chisq_overrep"}
+
+\subsection{Andamanese}
+\input{"pbs_Anda_LWK_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"pbs_Anda_LWK_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"pbs_Anda_LWK_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"pbs_Anda_LWK_anno_chisq_overrep"}
+
+\subsection{Birhor}
+\input{"pbs_BIR_LWK_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"pbs_BIR_LWK_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"pbs_BIR_LWK_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"pbs_BIR_LWK_anno_chisq_overrep"}
+
+% --- iHS
+\section{$|$iHS$|$}
+\subsection{Batwa}
+\input{"ihs_twa_txt_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"ihs_twa_txt_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"ihs_twa_txt_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"ihs_twa_txt_anno_chisq_overrep"}
+
+\subsection{Bakiga}
+\input{"ihs_kiga_txt_anno_extreme_vals"}
+Overlapping GWAS regions in Perry \emph{et al.} 2014:
+\input{"ihs_kiga_txt_anno_gwas_region_extreme_vals"}
+Only putative deleterious sites:
+\input{"ihs_kiga_txt_anno_deleterious_extreme_vals"}
+Chi-squared overrepresentation tests:
+\input{"ihs_kiga_txt_anno_chisq_overrep"}
+
+\end{document}

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=8,walltime=24:00:00
+#PBS -N snakemake
+#PBS -m abe
+#PBS -M cxb585@psu.edu
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# Call with qsub pbs/call_snakemake.pbs
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+export PATH=$PATH:$HOME/bin
+
+export PYTHONPATH=/usr/global/python/3.3.2/lib/python3.3/site-packages:/storage/home/cxb585/local_python:/storage/home/cxb585/local_python
+
+export PATH=$PATH:/storage/home/cxb585/local_python/
+
+# ----------------------------------------------------------------------------------------
+# --- Call snakemake
+# ----------------------------------------------------------------------------------------
+
+cd $working_dir
+
+snakemake --jobs 8 \
+    --cluster "qsub -V -M cxb585@psu.edu -m abe -l nodes=1:ppn={threads},walltime={params.runtime}:00:00{params.mem}"
+
+exit

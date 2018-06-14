@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1,walltime=48:00:00
+#PBS -N snpgenie
+#PBS -m abe
+#PBS -M cxb585@psu.edu
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}
+
+# Call with:
+# qsub -t 1-5 pbs/run_snpgenie.pbs
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+
+cd $working_dir
+
+# ----------------------------------------------------------------------------------------
+# --- Run SNPGenie
+# ----------------------------------------------------------------------------------------
+
+rm -r SNPGenie_Results/
+$HOME/bin/snpgenie/snpgenie-1.2.2.pl \
+    --sepfiles --minfreq=0.01 \
+    --snpreport=results/AGRHUM_EASTERN_100x267251.hg19_multianno.vcf  \
+    --fastafile=genomes/hg19/hg19.fa \
+    --gtffile=refGene/refGene.cds.pass.mod3.gtf
+
+exit

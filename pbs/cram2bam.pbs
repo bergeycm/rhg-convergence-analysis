@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1,walltime=20:00:00
+#PBS -N cram2bam
+#PBS -m abe
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+
+# ----------------------------------------------------------------------------------------
+# --- Convert CRAM files (on home) to BAM files (on scratch)
+# ----------------------------------------------------------------------------------------
+
+cd /gpfs/scratch/cxb585/batwa_bakiga_exomes
+
+HOME_ROOT=/gpfs/cyberstar/ghp3/Bergey/batwa_bakiga_exomes/
+
+cram=`ls ${HOME_ROOT}/e*/*.cram | head -n $PBS_ARRAYID | tail -n1`
+
+echo "Converting CRAM file [$cram]...\n";
+    
+out_bam=`basename $cram`
+out_bam=${out_bam/cram/bam}
+
+java -jar ~/bin/cramtools-3.0.jar bam -I $cram -O data/${out_bam}
+
+exit

@@ -1,0 +1,52 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1,walltime=4:00:00
+#PBS -N NvsS
+#PBS -m abe
+#PBS -M cxb585@psu.edu
+#PBS -e localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.e${PBS_JOBID}.${PBS_ARRAYID}
+#PBS -o localhost:${PBS_O_WORKDIR}/${PBS_JOBNAME}.o${PBS_JOBID}.${PBS_ARRAYID}
+
+# Call with qsub -v ont=[BP,MF,CC] -t 1-[number of GO terms / hunk size] pbs/compare_N_vs_S.pbs
+
+# With pruning nodeSize set to 10:
+#  qsub -v ont=BP -t1-56 pbs/compare_N_vs_S.pbs
+#  qsub -v ont=MF -t1-11 pbs/compare_N_vs_S.pbs
+#  qsub -v ont=CC -t1-7  pbs/compare_N_vs_S.pbs
+
+# ------------------------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------------------------
+
+working_dir=$PBS_O_WORKDIR
+export PATH=$PATH:$HOME/bin
+
+module load R/3.1.1
+
+# ----------------------------------------------------------------------------------------
+# --- Calculate Fst on a per-SNP and windowed basis
+# ----------------------------------------------------------------------------------------
+
+cd $working_dir
+
+HUNK_SIZE=100
+
+INDEX=$(($PBS_ARRAYID - 1))
+
+START=$(($INDEX * $HUNK_SIZE))
+END=$((START + $HUNK_SIZE))
+START=$(($START + 1))
+
+OUT_DIR=results/Fst_N_vs_S_by_GO/$ont
+
+mkdir -p $OUT_DIR
+
+OUT_FILE=$OUT_DIR/Fst_N_vs_S_by_GO_${ont}_${START}_${END}.txt
+
+CMD="Rscript scripts/compare_N_S_Fst_distributions_by_GO.R $START $END $ont"
+
+echo "CMD: [$CMD]"
+
+`$CMD`
+
+exit
